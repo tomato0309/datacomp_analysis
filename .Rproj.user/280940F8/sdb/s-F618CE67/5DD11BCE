@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "\n## \nT <- 200;\nx <- rnorm(T,0,1);\nalpha <- -1.25;\nbeta <- 0.75;\nlambda <- 0.6;\nsigma <- 0.5;\n\ny <- rep(NA,T);\ny[1] <- rnorm(1,alpha + beta * x[1],sigma);\nfor (t in 2:T)\n  y[t] <- rnorm(1,alpha + beta * x[t] + lambda * y[t-1], sigma);\n\n",
+    "created" : 1509244437398.000,
+    "dirty" : true,
+    "encoding" : "",
+    "folds" : "",
+    "hash" : "2832917339",
+    "id" : "5DD11BCE",
+    "lastKnownWriteTime" : 137438953478,
+    "last_content_update" : 1509244445419,
+    "path" : null,
+    "project_path" : null,
+    "properties" : {
+        "tempName" : "Untitled2"
+    },
+    "relative_order" : 5,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

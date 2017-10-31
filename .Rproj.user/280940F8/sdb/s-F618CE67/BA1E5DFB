@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "\n\nlibrary(openxlsx)\n\n## 環境設定\ninput <- \"~/Documents/データコンペ/analysis_data\"\nplace <- \"~/Documents/データコンペ\"\nweb <- paste(place,\"Web\",sep=\"/\")\nsetwd(input)\n\n## カテゴリ読み込み\ncomp <- read.xlsx(\"~/Documents/データコンペ/data_comp/カテゴリーPS割り付け.xlsx\")\n\n# ライブラリ\nif(!require(\"data.table\")){install.packages(\"data.table\")}\nif(!require(\"dplyr\")){install.packages(\"dplyr\")}\nif(!require(\"xlsx\")){install.packages(\"xlsx\")}\nif(!require(\"reshape2\")){install.packages(\"reshape2\")}\nif(!require(\"readr\")){install.packages(\"readr\")}\n\n\n## 使用する変数の抽出\nmain_data <- read_csv(\"メインデータ分析用.csv\",locale = locale(encoding = \"cp932\"))\n\n## 消費者価値観\nvalue_variable <- colnames(main_data)[grep(\"消費価値観\",colnames(main_data))]\nvalue_data <- data.frame(main_data[,c(\"SampleID\",value_variable)])\n\n## \ndemografic_variable <- \n  c(\"性別\",\n    \"年齢\",\n    \"未既婚\",\n    \"子供有無\",\n    \"子供人数\",\n    \"第１子の年齢\",\n    \"第２子の年齢\",\n    \"第３子の年齢\",\n    \"第４子の年齢\",\n    \"末子の年齢\",\n    \"家族構成\",\n    \"居住地\",\n    \"職業\",\n    \"あなたの現在のお住まいは.以下のどれにあたりますか.なお.親などの持ち家に同居している場合も.持ち家.としてお考えください..ひとつだけ.\",\n    \"BS視聴可能有無.あなたのご家庭では.BS放送.例.NHK.BS1など.を見ることができますか.\",\n    \"世帯保有金融資産\",\n    \"世帯年収\")\nvalue_variable <- colnames(main_data)[grep(\"消費価値観\",colnames(main_data))]\n\n\n\n\n",
+    "created" : 1508052902849.000,
+    "dirty" : true,
+    "encoding" : "",
+    "folds" : "",
+    "hash" : "3477402344",
+    "id" : "BA1E5DFB",
+    "lastKnownWriteTime" : 0,
+    "last_content_update" : 1508055496646,
+    "path" : null,
+    "project_path" : null,
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 4,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
