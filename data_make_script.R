@@ -113,6 +113,8 @@ beer <-
   data.frame()
 brand_id <- unique(beer$product_id)
 
+#omit_dat <- na.omit(res[c("SampleID","variable","value")])
+#test <- length(unique(omit_dat$SampleID))
 cst_id <- unique(res$SampleID)[1:500]
 result_data <- data.frame()
 progress.bar <- paste(rep("-", length(cst_id)), collapse="")
@@ -209,6 +211,7 @@ m_tv <- melt(tv,id.vars = "SampleID")
 m_tv$variable <- gsub("TVWatch.","",m_tv$variable)
 
 ## CM視聴と消費者の紐付け
+## カテゴリを指定
 cm_watch <-
   result_data %>% 
   select(SampleID) %>% 
@@ -279,28 +282,86 @@ cm_watch_data$cm_term <- with(cm_watch_data,
                         )
                     )
              )
-
+cm_watch_data$first_cm_flg <- ifelse(cm_watch_data$row_number == 1,1,0)
+cm_watch_data$last_cm_flg <- ifelse(cm_watch_data$row_number == cm_watch_data$max_num,1,0)
+cm_watch_data$middle_cm_flg <- ifelse(cm_watch_data$first_cm_flg == 0 & cm_watch_data$last_cm_flg == 0,1,0)
 
 ## ここまでで重要なデータフレームを中間テーブルとして出力
 # result_data 
 # cm_watch_data 
 # consumer_mart
-write.csv(result_data,"~/Documents/データコンペ/middle_table/result_data.csv",fileEncoding = "CP932")
-write.csv(cm_watch_data,"~/Documents/データコンペ/middle_table/cm_watch_data.csv",fileEncoding = "CP932")
-write.csv(comsumer_mart,"~/Documents/データコンペ/middle_table/consumer_mart.csv",fileEncoding = "CP932")
+write.csv(result_data,"~/Documents/データコンペ/middle_table/result_data.csv",fileEncoding = "CP932",row.names = 1)
+write.csv(cm_watch_data,"~/Documents/データコンペ/middle_table/cm_watch_data.csv",fileEncoding = "CP932",row.names = F)
+write.csv(comsumer_mart,"~/Documents/データコンペ/middle_table/consumer_mart.csv",fileEncoding = "CP932",row.names = F)
 save.image(file=filepass)
 
 
 
-
 ## cm_watch_dataを分析用に加工する
-#cm_watch_data %>%
-#group_by(
-#  SampleID,cm_id,cm_term
-#) %>% 
+brand_cm_value <-
+  cm_watch_data %>%
+  group_by(
+    SampleID,cm_id,cm_term
+  ) %>% 
+  summarise(
+    brand_cm_value = sum(value)
+    ,brand_cm_time = sum(ifelse(value==1,秒数,0))
+    ,brand_cm_freq = mean(product_num) #1番組あたり同一ブランドCM数
+    ,brand_cm_first = sum(first_cm_flg)
+    ,brand_cm_middle = sum(middle_cm_flg)
+    ,brand_cm_last = sum(last_cm_flg)
+  ) %>% 
+  data.frame()
 
+sum_cm_value<-
+  cm_watch_data %>%
+  group_by(SampleID,cm_term) %>% 
+  summarise(
+    total_cm_value = sum(value)
+    ,total_cm_time = sum(ifelse(value==1,秒数,0))
+    ) %>% 
+  data.frame()
 
+cm_value <- inner_join(brand_cm_value,sum_cm_value,by=c("SampleID","cm_term"))
+cm_value <- cm_value %>% 
+  filter(cm_term != "第2期後") %>%
+  rename(product_id = cm_id) %>%
+  mutate(
+    SOV_value =brand_cm_value / total_cm_value
+    ,SOV_time = brand_cm_time / total_cm_time
+  ) %>% 
+  select(-brand_cm_value,-brand_cm_time,-total_cm_value,-total_cm_time) %>%
+  data.frame()
+cm_value[is.na(cm_value)] <- 0
 
+melt_data <- melt(cm_value,id.vars = c("SampleID","product_id","cm_term"))
+tmp <-acast(melt_data,SampleID+product_id ~ variable ~ cm_term)
+
+list_names <- attributes(tmp)$dimnames[[3]]
+
+#第1期-第2期中
+  list_data<-data.frame(tmp[,,list_names[1]])
+  list_data[is.na(list_data)] <- 0
+  colnames(list_data) <- paste(list_names[1],colnames(list_data),sep="_")
+  list_data$SampleID <- substring(rownames(list_data),1,6)
+  list_data$product_id <- substring(rownames(list_data),8,13)
+  rownames(list_data) <- 1:nrow(list_data)
+  one_data<-list_data
+
+# 第1期前
+  list_data<-data.frame(tmp[,,list_names[2]])
+  list_data[is.na(list_data)] <- 0
+  colnames(list_data) <- paste(list_names[2],colnames(list_data),sep="_")
+  list_data$SampleID <- substring(rownames(list_data),1,6)
+  list_data$product_id <- substring(rownames(list_data),8,13)
+  rownames(list_data) <- 1:nrow(list_data)
+  two_data<-list_data
+
+tmp_data <- inner_join(one_data,two_data)
+  
+## 
+result_data$SampleID <- as.character(result_data$SampleID)
+res_merge_data <- inner_join(result_data,tmp_data) %>% na.omit()
 
 
 
