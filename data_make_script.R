@@ -9,6 +9,11 @@ web <- paste(place,"Web",sep="/")
 place <- "~/Documents/データコンペ"
 questionare <- paste(place,"アンケートデータ/CSV",sep="/")
 
+## loadファイルの読み込み
+filename <- "middle_data.RData"
+filepass <- paste("/Users/ryosuzuki/Documents/データコンペ/data_comp/",filename,sep="")
+load(filepass)
+
 ## ライブラリ読み込み
 if(!require("data.table")){install.packages("data.table")}
 if(!require("dplyr")){install.packages("dplyr")}
@@ -191,9 +196,10 @@ CM_variable <- inner_join(CM_variable,cm_data)
 #write.csv(CM_variable,"cm_content_variable.csv")
 
 ## ファイルを一度保存しておく
-filename <- paste(format(Sys.time(), '%Y%m%d'),"_middle_data",".RData",sep="")
+filename <- "middle_data.RData"
 filepass <- paste("/Users/ryosuzuki/Documents/データコンペ/data_comp/",filename,sep="")
 save.image(file=filepass)
+load(filepass)
 
 ## CM要因(SampleIDと番組の紐付け)
 setwd(questionare)
@@ -216,42 +222,26 @@ cm_watch <-
   data.frame() 
 head(cm_watch)
 
-## 
+## 調査項目のブランド名とCMデータのブランド名を名寄せ
 tvcm_name = as.character(unique(cm_watch$アイテム名))
 ques_name = data.frame(ques_name = as.character(unique(result_data$product_name)))
-beer_name <- c("ヱビスビール"
-                ,"ヱビスビール"
-                ,"アサヒ スーパードライ"
-                ,"サッポロ 生ビール黒ラベル"
-                ,"キリン 一番搾り生ビール"
-                ,"なし"
-                ,"アサヒ スーパードライ"
-                ,"ヱビスビール"
-                ,"サントリー ザ・プレミアム・モルツ"
-                ,"アサヒ スーパードライ"
-              )
-masta <- data.frame(cbind(tvcm_name,beer_name))
+cm_masta<-read.csv("/Users/ryosuzuki/Documents/データコンペ/analysis_data/cm_masta.csv",fileEncoding = "CP932",stringsAsFactors = F)
+cm_masta<- cm_masta[,c(1,2,3)]
 
-masta$tvcm_name <- as.character(masta$tvcm_name)
-masta$beer_name <- as.character(masta$beer_name)
-ques_name$ques_name <- as.character(ques_name$ques_name)
+cm_watch$アイテム名 <- gsub(" ","",cm_watch$アイテム名)
+cm_watch <- unique(cm_watch)
+cm_masta <- cm_masta %>% rename(アイテム名 = tvcm_name)
+cm_watch_data<-merge(cm_watch,cm_masta, by = "アイテム名", all.x = TRUE)
 
-full_masta <- dplyr::full_join(masta,ques_name,by=c("beer_name" ="ques_name")) %>% 
-  filter(is.na(tvcm_name)==F | is.na(beer_name)==F) %>%
-  data.frame()
-full_masta[is.na(full_masta)] <- "なし"
-colnames(full_masta)[2] <- "research_name"
 
-join_data <- left_join(cm_watch,full_masta,by=c("アイテム名"="tvcm_name"))
 
+## 各productごとの調査日付の特定
 setwd(place)
 main_data_masta <- read.xlsx("データ定義_2017.xlsx",sheetIndex=3,colIndex=c(1,2),startRow = 2)
 main_data_masta <- main_data_masta[-1,]
 main_data_masta$変数名 <- as.character(main_data_masta$変数名)
 
-## 
 brand_id_data <- data.frame()  
-  
 for(k in brand_id){
   
   main_data_masta$flg <- ifelse(str_count(main_data_masta$変数名,k) >= 1,1,0)
@@ -266,8 +256,25 @@ for(k in brand_id){
   
   brand_id_data <- rbind(brand_id_data,id_data)
 }
+cols <- colnames(brand_id_data)
+for(c in cols){
+  brand_id_data[,c] <- as.character(brand_id_data[,c])  
+}
+brand_id_data$t1 <- paste('2017',substring(brand_id_data$t1,1,2),substring(brand_id_data$t1,4,5),sep="-")
+brand_id_data$t2 <- paste('2017',substring(brand_id_data$t2,1,2),substring(brand_id_data$t2,4,5),sep="-")
 
-## 
+## cmデータと紐付け
+cm_watch_data$cm_id <- as.character(cm_watch_data$cm_id)
+join<-left_join(cm_watch_data,brand_id_data,by=c("cm_id"="product_id"))
+
+## 放送日がいつの調査時点なのかを識別
+
+
+
+## ここまでで重要なデータフレームの整理
+# result_data
+# cm_watch_data 
+# 
 
 
 
