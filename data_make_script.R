@@ -95,18 +95,18 @@ brand_category_masta <-
 
 
 ## 態度と購入をブランド別消費者別に加工する
-#beer <- c("")
-#brand_category_masta[brand_category_masta$カテゴリー名 == "ドリンク剤（購入意向）","カテゴリ名"]
-#brand_id <- unique(brand_category_masta$product_id)
 
+#brand_id <- unique(brand_category_masta$product_id)
 ## ひとまずビールに限定する
 beer <-
   brand_category_masta %>% 
-  filter(カテゴリー名=="缶やビン入りのビール（発泡酒や第三のビールを除く）（購入回数）") %>% 
+  filter(
+    カテゴリー名=="缶やビン入りのビール（発泡酒や第三のビールを除く）（購入回数）" | 
+    カテゴリー名=="缶入りの発泡酒や第三のビール（購入回数）"
+    ) %>% 
   data.frame()
 brand_id <- unique(beer$product_id)
 
-#brand_id <- brand_category_masta %>% filter(カテゴリー名==beer) %>% select(カテゴリー名) %>% unique()
 cst_id <- unique(res$SampleID)[1:500]
 result_data <- data.frame()
 progress.bar <- paste(rep("-", length(cst_id)), collapse="")
@@ -139,28 +139,61 @@ for(i in cst_id){ # 消費者別
 } # 消費者別
 
 ## 消費者別態度購入データを出力する(後ほど全消費者全カテゴリで実行)
-#write.csv(result_data,"consumer_questionare_data.csv",fileEncoding = "CP932")
-
-
-
+write.csv(result_data,"consumer_questionare_data.csv",fileEncoding = "CP932")
 
 
 ### CM要因(番組とブランドの紐付け)
-cm_category <- read.xlsx("CMカテゴリー割り付け済み.xlsx",sheetIndex = 1,stringsAsFactors=FALSE)
-cm_category<-
-  cm_category %>% 
-  filter(is.na(番組ID)==F) %>%
-  filter(is.na(広告主)==F) %>%
-  data.frame()
-cm_category[is.na(cm_category)] <- 0
-cm_category$番組ID <- gsub("TVWatch.","",cm_category$番組ID)
+  cm_category <- read.xlsx("CMカテゴリー割り付け済み.xlsx",sheetIndex = 1,stringsAsFactors=FALSE)
+  cm_category<-
+    cm_category %>% 
+    filter(is.na(番組ID)==F) %>%
+    filter(is.na(広告主)==F) %>%
+    data.frame()
+  cm_category[is.na(cm_category)] <- 0
+  cm_category$番組ID <- gsub("TVWatch.","",cm_category$番組ID)
+  
+  setwd(place)
+  tv_masta <- read.xlsx("データ定義_2017.xlsx",sheetIndex=1,colIndex=c(5:12),startRow = 2)
+  tv_masta<-tv_masta[-1,]
+  tv_masta$番組ID <- as.character(tv_masta$番組ID)
+  cm_data <- inner_join(tv_masta,cm_category)
 
-setwd(place)
-tv_masta <- read.xlsx("データ定義_2017.xlsx",sheetIndex=1,colIndex=c(5:12),startRow = 2)
-tv_masta<-tv_masta[-1,]
-tv_masta$番組ID <- as.character(tv_masta$番組ID)
-cm_data <- inner_join(tv_masta,cm_category)
+## CMの順序と密度を計算
+  CM <- read.csv("~/Documents/データコンペ/出稿データ/テレビCM出稿データ_2017.csv",fileEncoding = "CP932",stringsAsFactors = F)
+  CM_adj <- # 1番組あたりの同一CM回数と合計秒数を算出
+    CM %>% 
+    group_by(番組ID,広告主,アイテム名) %>% 
+    summarise(
+      product_num = n()
+      ,product_second = sum(秒数)
+      ) %>% 
+    data.frame()
+  
+  CM_order <- # CMの順番を計算
+    CM %>% 
+    group_by(番組ID) %>%
+    mutate(row_number = row_number()) %>% 
+    data.frame()
+  
+  CM_max<-
+    CM_order %>% 
+    group_by(番組ID) %>%
+    summarise(max_num = max(row_number)) %>% 
+    data.frame()
+  
+  CM_variable <- inner_join(CM_adj,CM_order)
+  CM_variable <- inner_join(CM_variable,CM_max)
+  CM_variable$番組ID <- gsub("TVWatch.","",CM_variable$番組ID)
+  CM_variable <- CM_variable %>% arrange(番組ID,row_number)
 
+## CMのカテゴリ変数と順番頻度を紐付け(全カテゴリ)
+CM_variable <- inner_join(CM_variable,cm_data)
+#write.csv(CM_variable,"cm_content_variable.csv")
+
+## ファイルを一度保存しておく
+filename <- paste(format(Sys.time(), '%Y%m%d'),"_middle_data",".RData",sep="")
+filepass <- paste("/Users/ryosuzuki/Documents/データコンペ/data_comp/",filename,sep="")
+save.image(file=filepass)
 
 ## CM要因(SampleIDと番組の紐付け)
 setwd(questionare)
@@ -173,11 +206,15 @@ cm_watch <-
   result_data %>% 
   select(SampleID) %>% 
   inner_join(m_tv,by=c("SampleID")) %>%
-  inner_join(cm_data,by=c("variable"="番組ID")) %>% 
-  filter(缶やビン入りのビール.発泡酒や第三のビールを除く..購入回数. != 0) %>% 
+  inner_join(CM_variable,by=c("variable"="番組ID")) %>% 
+  filter(
+    缶やビン入りのビール.発泡酒や第三のビールを除く..購入回数. != 0 |
+    缶入りの発泡酒や第三のビール.購入回数.!= 0
+    ) %>% 
   filter(アイテム名 != "本搾りチューハイ グレープフルーツ/レモン") %>%
-  select(SampleID,variable,value,放送日,開始時,開始分,終了時,終了分,放送局,広告主,アイテム名,秒数) %>% 
+  select(SampleID,variable,value,放送日,開始時,開始分,終了時,終了分,放送局,広告主,アイテム名,秒数,product_num,product_second,row_number,max_num) %>% 
   data.frame() 
+head(cm_watch)
 
 ## 
 tvcm_name = as.character(unique(cm_watch$アイテム名))
