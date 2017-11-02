@@ -70,9 +70,10 @@ demografic_variable <-
     "世帯保有金融資産",
     "世帯年収")
 
-## 
+## 今回使用する変数の抽出
 demo_data<-data.frame(main_data[,c("SampleID",demografic_variable)])
-
+value_data<-data.frame(main_data[,c("SampleID",value_variable)])
+comsumer_mart <- inner_join(demo_data,value_data,by=c("SampleID"))
 
 ## カテゴリ情報の紐付け
 setwd(input)
@@ -264,42 +265,39 @@ brand_id_data$t1 <- paste('2017',substring(brand_id_data$t1,1,2),substring(brand
 brand_id_data$t2 <- paste('2017',substring(brand_id_data$t2,1,2),substring(brand_id_data$t2,4,5),sep="-")
 
 ## cmデータと紐付け
-cm_watch_data$cm_id <- as.character(cm_watch_data$cm_id)
-join<-left_join(cm_watch_data,brand_id_data,by=c("cm_id"="product_id"))
+#cm_watch_data$cm_id <- as.character(cm_watch_data$cm_id)
+#join<-left_join(cm_watch_data,brand_id_data,by=c("cm_id"="product_id"))
+
+t1 <- unique(brand_id_data$t1)
+t2 <- unique(brand_id_data$t2)
 
 ## 放送日がいつの調査時点なのかを識別
+cm_watch_data$cm_term <- with(cm_watch_data, 
+             ifelse(放送日 < t1 ,"第1期前",
+                       ifelse(放送日 >= t1 & 放送日 < t2 ,"第1期-第2期中",
+                                 ifelse(放送日 >= t2,"第2期後",'他')
+                        )
+                    )
+             )
 
 
-
-## ここまでで重要なデータフレームの整理
-# result_data
+## ここまでで重要なデータフレームを中間テーブルとして出力
+# result_data 
 # cm_watch_data 
-# 
+# consumer_mart
+write.csv(result_data,"~/Documents/データコンペ/middle_table/result_data.csv",fileEncoding = "CP932")
+write.csv(cm_watch_data,"~/Documents/データコンペ/middle_table/cm_watch_data.csv",fileEncoding = "CP932")
+write.csv(comsumer_mart,"~/Documents/データコンペ/middle_table/consumer_mart.csv",fileEncoding = "CP932")
+save.image(file=filepass)
 
 
 
 
-
-
-
-
-
-
-
-
-M <- melt(main_data,id.vars = "SampleID")
-M$variable <- as.character(M$variable)
-
-
-res %>%
-filter(カテゴリー名 == "缶やビン入りのビール（発泡酒や第三のビールを除く）（購入回数）") %>%
-group_by(
-  product_name
-  ,research_date
-  ) %>% 
-summarise(N = n()) %>%
-data.frame()
-
+## cm_watch_dataを分析用に加工する
+#cm_watch_data %>%
+#group_by(
+#  SampleID,cm_id,cm_term
+#) %>% 
 
 
 
