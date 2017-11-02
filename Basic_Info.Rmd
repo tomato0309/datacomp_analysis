@@ -1,0 +1,48 @@
+---
+title: "Basic_Analysis"
+author: "ryo_suzuki"
+date:  "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+  pdf_document:
+    latex_engine: xelatex
+mainfont: Hiragino Kaku Gothic Pro
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.width = 12, fig.height = 8, fig.path = 'Figs/',
+                      include = TRUE, echo = FALSE, warning = FALSE, message = FALSE)
+library(needs)
+needs(readr,dplyr,reshape2)
+
+```
+
+## データセットの確認
+使用するデータの先頭5行
+
+```{r head_data}
+library(readr)
+result_data <- read_csv("/Users/ryosuzuki/Documents/データコンペ/analysis_data/consumer_questionare_data.csv",locale=locale(encoding="CP932"))
+knitr::kable(head(result_data),caption="先頭5行")
+
+```
+
+## 態度と購入変数の基礎集計
+全体の集計
+
+```{r Ydata_agg, echo=FALSE}
+
+box_data <-
+  result_data %>% 
+  filter(カテゴリー名=="缶やビン入りのビール（発泡酒や第三のビールを除く）（購入回数）") %>% 
+  select(
+    -product_id
+    ,-product_name
+    ,-カテゴリー名) %>% 
+  melt(id.vars="SampleID") %>% 
+  data.frame()
+
+boxplot(value~variable,data=box_data)
+
+```
+
+

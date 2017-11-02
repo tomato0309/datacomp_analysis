@@ -138,6 +138,12 @@ for(i in cst_id){ # 消費者別
   } # ブランド別
 } # 消費者別
 
+## 消費者別態度購入データを出力する(後ほど全消費者全カテゴリで実行)
+#write.csv(result_data,"consumer_questionare_data.csv",fileEncoding = "CP932")
+
+
+
+
 
 ### CM要因(番組とブランドの紐付け)
 cm_category <- read.xlsx("CMカテゴリー割り付け済み.xlsx",sheetIndex = 1,stringsAsFactors=FALSE)
