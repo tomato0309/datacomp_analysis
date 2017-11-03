@@ -115,7 +115,7 @@ brand_id <- unique(beer$product_id)
 
 #omit_dat <- na.omit(res[c("SampleID","variable","value")])
 #test <- length(unique(omit_dat$SampleID))
-cst_id <- unique(res$SampleID)[1:500]
+cst_id <- unique(res$SampleID)
 result_data <- data.frame()
 progress.bar <- paste(rep("-", length(cst_id)), collapse="")
 
@@ -295,7 +295,7 @@ write.csv(cm_watch_data,"~/Documents/データコンペ/middle_table/cm_watch_da
 write.csv(comsumer_mart,"~/Documents/データコンペ/middle_table/consumer_mart.csv",fileEncoding = "CP932")
 save.image(file=filepass)
 
-
+#test <- read_csv("~/Documents/データコンペ/middle_table/result_data.csv",locale=locale(encoding = "CP932"))
 
 ## cm_watch_dataを分析用に加工する
 brand_cm_value <-

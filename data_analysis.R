@@ -39,6 +39,9 @@ use_data <-
 
 ## 練習
 library(lme4)
+install.packages("lmerTest")　#lmerTestインストール
+library(lmerTest) #lmerTest読み込み
+
 lmr_res <- lmer(第2期購入意向 ~ 
                    (1|SampleID) +
                    (1|product_id) +
@@ -49,8 +52,8 @@ lmr_res <- lmer(第2期購入意向 ~
                    登場回数 +
                    発言回数 +
                    第1期前_SOV_value:登場回数 +
-                   第1期前_SOV_value:発言回数
-                 ,data=use_data)
+                   第1期前_SOV_value:発言回数,
+                 data=use_data)
 summary(lmr_res)
 
 
