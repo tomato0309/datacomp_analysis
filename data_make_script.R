@@ -290,9 +290,9 @@ cm_watch_data$middle_cm_flg <- ifelse(cm_watch_data$first_cm_flg == 0 & cm_watch
 # result_data 
 # cm_watch_data 
 # consumer_mart
-write.csv(result_data,"~/Documents/データコンペ/middle_table/result_data.csv",fileEncoding = "CP932",row.names = 1)
-write.csv(cm_watch_data,"~/Documents/データコンペ/middle_table/cm_watch_data.csv",fileEncoding = "CP932",row.names = F)
-write.csv(comsumer_mart,"~/Documents/データコンペ/middle_table/consumer_mart.csv",fileEncoding = "CP932",row.names = F)
+write.csv(result_data,"~/Documents/データコンペ/middle_table/result_data.csv",fileEncoding = "CP932")
+write.csv(cm_watch_data,"~/Documents/データコンペ/middle_table/cm_watch_data.csv",fileEncoding = "CP932")
+write.csv(comsumer_mart,"~/Documents/データコンペ/middle_table/consumer_mart.csv",fileEncoding = "CP932")
 save.image(file=filepass)
 
 
@@ -359,11 +359,13 @@ list_names <- attributes(tmp)$dimnames[[3]]
 
 tmp_data <- inner_join(one_data,two_data)
   
-## 
+## 結果の出力
 result_data$SampleID <- as.character(result_data$SampleID)
 res_merge_data <- inner_join(result_data,tmp_data) %>% na.omit()
 
+## 確認
+summary(res_merge_data)
+head(res_merge_data)
 
-
-
+write.csv(res_merge_data,"~/Documents/データコンペ/middle_table/beer_test_data.csv",fileEncoding = "CP932")
 
