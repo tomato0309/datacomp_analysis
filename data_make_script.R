@@ -277,8 +277,8 @@ t2 <- unique(brand_id_data$t2)
 ## 放送日がいつの調査時点なのかを識別
 cm_watch_data$cm_term <- with(cm_watch_data, 
              ifelse(放送日 < t1 ,"第1期前",
-                       ifelse(放送日 >= t1 & 放送日 < t2 ,"第1期-第2期中",
-                                 ifelse(放送日 >= t2,"第2期後",'他')
+                       ifelse(放送日 >= t1 & 放送日 <= t2 ,"第1期-第2期中",
+                                 ifelse(放送日 > t2,"第2期後",'他')
                         )
                     )
              )
