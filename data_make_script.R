@@ -104,14 +104,15 @@ brand_category_masta <-
 
 #brand_id <- unique(brand_category_masta$product_id)
 ## ひとまずビールに限定する
-beer <-
-  brand_category_masta %>% 
-  filter(
-    カテゴリー名=="缶やビン入りのビール（発泡酒や第三のビールを除く）（購入回数）" | 
-    カテゴリー名=="缶入りの発泡酒や第三のビール（購入回数）"
-    ) %>% 
-  data.frame()
-brand_id <- unique(beer$product_id)
+#beer <-
+#  brand_category_masta %>% 
+#  filter(
+#    カテゴリー名=="缶やビン入りのビール（発泡酒や第三のビールを除く）（購入回数）" | 
+#    カテゴリー名=="缶入りの発泡酒や第三のビール（購入回数）"
+#    ) %>% 
+#  data.frame()
+#brand_id <- unique(beer$product_id)
+brand_id <- unique(brand_category_masta$product_id)
 
 #omit_dat <- na.omit(res[c("SampleID","variable","value")])
 #test <- length(unique(omit_dat$SampleID))
@@ -147,7 +148,13 @@ for(i in cst_id){ # 消費者別
 } # 消費者別
 
 ## 消費者別態度購入データを出力する(後ほど全消費者全カテゴリで実行)
-write.csv(result_data,"consumer_questionare_data.csv",fileEncoding = "CP932")
+#write.csv(result_data,"consumer_questionare_data.csv",fileEncoding = "CP932")
+file <- "/Users/ryosuzuki/Documents/データコンペ/MarketingInsight/consumer_questionare_data_all.csv"
+result_data <- read.csv(file,fileEncoding = "CP932",row.names = 1)
+
+result_data %>%
+mutate(diff = 第2期購入意向 - 第1期購入意向) %>% 
+head()
 
 
 ### CM要因(番組とブランドの紐付け)
