@@ -152,9 +152,28 @@ for(i in cst_id){ # 消費者別
 file <- "/Users/ryosuzuki/Documents/データコンペ/MarketingInsight/consumer_questionare_data_all.csv"
 result_data <- read.csv(file,fileEncoding = "CP932",row.names = 1)
 
-result_data %>%
-mutate(diff = 第2期購入意向 - 第1期購入意向) %>% 
-head()
+agg <-
+  result_data %>%
+  mutate(diff = 第2期購入意向 - 第1期購入意向) %>% 
+  group_by(カテゴリー名) %>%
+  summarise(
+    N = length(unique(product_name))
+    ,max = max(diff,na.rm=T)
+    ,min = min(diff,na.rm=T)
+    ,mean = mean(diff,na.rm=T)
+    ,sd = sd(diff,na.rm=T)
+    ,med = median(diff,na.rm=T)
+  ) %>% 
+  filter(N >= 3) %>% 
+  data.frame()
+View(agg)
+
+write.csv(agg,"カテゴリ別購入意向差分集計.csv")
+
+#
+plot(agg$mean,agg$sd,xlab="平均",ylab="標準偏差")
+text(agg$mean,agg$sd,labels = agg$カテゴリー名)
+
 
 
 ### CM要因(番組とブランドの紐付け)
