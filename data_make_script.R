@@ -223,12 +223,14 @@ text(agg$mean,agg$sd,labels = agg$カテゴリー名)
 ## CMのカテゴリ変数と順番頻度を紐付け(全カテゴリ)
 CM_variable <- inner_join(CM_variable,cm_data)
 #write.csv(CM_variable,"cm_content_variable.csv")
+CM_variable <-data.frame(fread("/Users/ryosuzuki/Documents/データコンペ/analysis_data/cm_content_variable.csv"))
+
 
 ## ファイルを一度保存しておく
-filename <- "middle_data.RData"
-filepass <- paste("/Users/ryosuzuki/Documents/データコンペ/data_comp/",filename,sep="")
-save.image(file=filepass)
-load(filepass)
+#filename <- "middle_data.RData"
+#filepass <- paste("/Users/ryosuzuki/Documents/データコンペ/data_comp/",filename,sep="")
+#save.image(file=filepass)
+#load(filepass)
 
 ## CM要因(SampleIDと番組の紐付け)
 setwd(questionare)
@@ -264,7 +266,6 @@ cm_masta <- cm_masta %>% rename(アイテム名 = tvcm_name)
 cm_watch_data<-merge(cm_watch,cm_masta, by = "アイテム名", all.x = TRUE)
 
 
-
 ## 各productごとの調査日付の特定
 setwd(place)
 main_data_masta <- read.xlsx("データ定義_2017.xlsx",sheetIndex=3,colIndex=c(1,2),startRow = 2)
@@ -294,7 +295,7 @@ brand_id_data$t1 <- paste('2017',substring(brand_id_data$t1,1,2),substring(brand
 brand_id_data$t2 <- paste('2017',substring(brand_id_data$t2,1,2),substring(brand_id_data$t2,4,5),sep="-")
 
 ## cmデータと紐付け
-#cm_watch_data$cm_id <- as.character(cm_watch_data$cm_id)
+cm_watch_data$cm_id <- as.character(cm_watch_data$cm_id)
 #join<-left_join(cm_watch_data,brand_id_data,by=c("cm_id"="product_id"))
 
 t1 <- unique(brand_id_data$t1)
@@ -311,6 +312,76 @@ cm_watch_data$cm_term <- with(cm_watch_data,
 cm_watch_data$first_cm_flg <- ifelse(cm_watch_data$row_number == 1,1,0)
 cm_watch_data$last_cm_flg <- ifelse(cm_watch_data$row_number == cm_watch_data$max_num,1,0)
 cm_watch_data$middle_cm_flg <- ifelse(cm_watch_data$first_cm_flg == 0 & cm_watch_data$last_cm_flg == 0,1,0)
+
+
+
+#### 特徴量作成用データセットの作成
+cm_agg_data <-
+  cm_watch_data %>%
+  group_by(SampleID,放送日,広告主,アイテム名,ques_name) %>% 
+  summarise(
+    value = sum(value)
+  ) %>% 
+  filter(ques_name != 'なし') %>% 
+  arrange(SampleID,放送日,アイテム名) %>% 
+  data.frame()
+
+# 消費者 * 全日付 * アイテム名のマスタデータを作成する
+item <-
+  cm_agg_data %>% 
+  select(広告主,アイテム名,ques_name) %>% 
+  group_by(広告主,アイテム名,ques_name) %>% 
+  unique() %>% 
+  data.frame()
+item <- item %>% mutate(item_id = paste0('Item_',row_number()))
+
+cm_date_calender <- data.frame(date = as.Date(unique(CM_variable$放送日))) %>% arrange(date)
+cm_date_calender <- rbind(cm_date_calender,"2017-02-10","2017-02-14") %>% arrange(date)
+sample_data <- data.frame(SampleID= unique(cm_agg_data$SampleID))
+sample_date_data <- data.frame(
+  expand.grid(
+    SampleID = sample_data$SampleID
+    ,date = cm_date_calender$date
+    ,item_id = item$item_id
+    )
+  )
+sample_date_data$item_id <- as.character(sample_date_data$item_id)
+sample_date_data <- inner_join(sample_date_data,item,by=c("item_id"))
+
+## マスタデータに視聴データを紐付ける
+# そもそもCMやっているのかどうかフラグ(一応付ける)
+
+
+
+
+cm_agg_data %>%
+group_by(アイテム名) %>% 
+summarise(
+  num = length(unique(放送日))
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ## ここまでで重要なデータフレームを中間テーブルとして出力
 # result_data 
