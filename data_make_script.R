@@ -350,15 +350,26 @@ sample_date_data <- inner_join(sample_date_data,item,by=c("item_id"))
 
 ## マスタデータに視聴データを紐付ける
 # そもそもCMやっているのかどうかフラグ(一応付ける)
+cm_on_data <-
+  cm_agg_data %>% 
+  group_by(放送日,広告主,アイテム名,ques_name) %>% 
+  summarise(cm_on = sum(value)) %>% 
+  mutate(cm_on_flg = ifelse(cm_on >= 1,1,0)) %>% 
+  select(-cm_on) %>%
+  rename(date = 放送日) %>%
+  data.frame()
+
+# 紐付け
+cm_on_watch <-left_join(sample_date_data,cm_on_data)
 
 
+# CM視聴を紐付ける
+colnames(cm_agg_data)[2] <- "date"
+
+cm_on_watch <- left_join(cm_on_watch,cm_agg_data)
+cm_on_watch[is.na(cm_on_watch)] <- 0 ##ゼロは見てない、放送してない
 
 
-cm_agg_data %>%
-group_by(アイテム名) %>% 
-summarise(
-  num = length(unique(放送日))
-)
 
 
 
