@@ -362,14 +362,15 @@ cm_on_data <-
 # 紐付け
 cm_on_watch <-left_join(sample_date_data,cm_on_data)
 
-
 # CM視聴を紐付ける
 colnames(cm_agg_data)[2] <- "date"
+colnames(cm_agg_data)[6] <- "cm_watch_flg"
 
 cm_on_watch <- left_join(cm_on_watch,cm_agg_data)
 cm_on_watch[is.na(cm_on_watch)] <- 0 ##ゼロは見てない、放送してない
 
-
+# 出力
+write.csv(cm_on_watch,"/Users/ryosuzuki/Documents/データコンペ/MarketingInsight/cm_watch_ondata.csv")
 
 
 
