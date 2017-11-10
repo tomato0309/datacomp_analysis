@@ -354,11 +354,12 @@ cm_on_data <-
   cm_agg_data %>% 
   group_by(放送日,広告主,アイテム名,ques_name) %>% 
   summarise(cm_on = sum(value)) %>% 
-  mutate(cm_on_flg = ifelse(cm_on >= 1,1,0)) %>% 
-  select(-cm_on) %>%
-  rename(date = 放送日) %>%
   data.frame()
 
+cm_on_data$cm_on_flg <- ifelse(cm_on_data$cm_on >= 1,1,0)
+colnames(cm_on_data)[1] <- "放送日"
+cm_on_data <- cm_on_data %>% select(-cm_on) %>%data.frame()
+  
 # 紐付け
 cm_on_watch <-left_join(sample_date_data,cm_on_data)
 
@@ -368,16 +369,36 @@ colnames(cm_agg_data)[6] <- "cm_watch_flg"
 
 cm_on_watch <- left_join(cm_on_watch,cm_agg_data)
 cm_on_watch[is.na(cm_on_watch)] <- 0 ##ゼロは見てない、放送してない
+cm_on_watch <- cm_on_watch %>% arrange(SampleID,item_id,date)
+cm_on_watch$cm_watch_flg <- ifelse(cm_on_watch$cm_watch_flg >= 1,1,0)
 
 # 出力
+#
 write.csv(cm_on_watch,"/Users/ryosuzuki/Documents/データコンペ/MarketingInsight/cm_watch_ondata.csv")
 
 
+## 特徴量作成
+# 累積視聴回数
+test <- 
+  cm_on_watch %>%
+  group_by(SampleID,item_id) %>%
+  mutate(
+    cm_watch_cum_sum =cumsum(cm_watch_flg)
+    ) %>%
+  data.frame()
+summary(test)
 
 
+test %>%
+filter(item_id == "Item_12" & SampleID == '750008') %>%
+data.frame() %>% head(100)
 
 
-
+cm_on_watch %>% group_by(item_id) %>% 
+  summarise(
+    cm_on_flg = sum(cm_on_flg)
+    ,cm_watch_flg = sum(cm_watch_flg)
+    )
 
 
 
